@@ -82,10 +82,10 @@ function imprimirLaberinto() {
 
 function mover(direccion: string) {
   const direcciones: Record<string, [number, number]> = {
-    norte: [-1, 0],
-    sur: [1, 0],
-    oeste: [0, -1],
-    este: [0, 1],
+    n: [-1, 0],
+    s: [1, 0],
+    o: [0, -1],
+    e: [0, 1],
   };
 
   const delta = direcciones[direccion];

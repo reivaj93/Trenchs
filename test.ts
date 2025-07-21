@@ -2,18 +2,18 @@ import * as readline from 'readline';
 import  chalk  from 'chalk-advanced';
 
 const mazeStructure: string[][] = [
-  ['|', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '|'],
-  ['|', '*', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '|'],
-  ['|', '#', '#', ' ', ' ', ' ', '#', '#', ' ', '#', ' ', ' ', '|'],
-  ['E', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', '|'],
-  ['|', ' ', '#', '*', ' ', '#', ' ', '#', '#', ' ', ' ', ' ', '|'],
-  ['|', ' ', '#', '#', ' ', '#', ' ', '#', '#', ' ', '#', '#', '|'],
-  ['|', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', '#', '#', '|'],
-  ['|', ' ', '#', ' ', '#', ' ', ' ', '*', '#', ' ', ' ', ' ', 'P'],
-  ['|', ' ', '#', ' ', '#', ' ', ' ', ' ', '#', ' ', '#', '#', '|'],
-  ['|', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'],
-  ['|', '#', ' ', '#', ' ', ' ', '#', '#', ' ', '#', '#', '#', '|'],
-  ['|', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '|'],
+  ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+  ['#', '*', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#'],
+  ['#', '#', '#', ' ', ' ', ' ', '#', '#', ' ', '#', ' ', ' ', '#'],
+  ['E', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', '#'],
+  ['#', ' ', '#', '*', ' ', '#', ' ', '#', '#', ' ', ' ', ' ', '#'],
+  ['#', ' ', '#', '#', ' ', '#', ' ', '#', '#', ' ', '#', '#', '#'],
+  ['#', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', '#', '#', '#'],
+  ['#', ' ', '#', ' ', '#', ' ', ' ', '*', '#', ' ', ' ', ' ', 'P'],
+  ['#', ' ', '#', ' ', '#', ' ', ' ', ' ', '#', ' ', '#', '#', '#'],
+  ['#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+  ['#', '#', ' ', '#', ' ', ' ', '#', '#', ' ', '#', '#', '#', '#'],
+  ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
 ];
 
 let posY = 7;
@@ -57,16 +57,16 @@ function imprimirLaberinto() {
 
 function mover(direccion: string) {
   const direcciones: Record<string, [number, number]> = {
-    norte: [-1, 0],
-    sur: [1, 0],
-    oeste: [0, -1],
-    este: [0, 1],
+    n: [-1, 0],
+    s: [1, 0],
+    o: [0, -1],
+    e: [0, 1],
   };
 
   const delta = direcciones[direccion];
   if (!delta) {
-    console.log("Comando inválido. Usa: norte, sur, este, oeste");
-    return;
+    console.log("Comando inválido. Usa: n, s, e, o");
+    return true;
   }
 
   const nuevaY = posY + delta[0];
@@ -78,7 +78,7 @@ function mover(direccion: string) {
 
   if (!dentroDeLimites || mazeStructure[nuevaY][nuevaX] === '#') {
     console.log("¡No puedes moverte en esa dirección!");
-    return;
+    return true;
   }
 
   if (mazeStructure[nuevaY][nuevaX] === 'E') {
@@ -89,7 +89,7 @@ function mover(direccion: string) {
     imprimirLaberinto();
     console.log(`\n🎉 ¡Has ganado en ${movimientos} movimientos!`);
     rl.close();
-    return;
+    return false;
   }
 
   // Mover jugador
@@ -98,13 +98,18 @@ function mover(direccion: string) {
   posX = nuevaX;
   mazeStructure[posY][posX] = 'P';
   movimientos++;
+  return true;
 }
 
 function jugar() {
   imprimirLaberinto();
-  rl.question("Escribe una dirección (norte, sur, este, oeste): ", (input) => {
-    mover(input.trim().toLowerCase());
+  rl.question("Escribe una dirección (n, s, e, o): ", (input) => {
+    const seguir = mover(input.trim().toLowerCase());
+    if (seguir) 
+      setTimeout(() => {
     jugar();
+  },1200)
+    ;
   });
 }
 
