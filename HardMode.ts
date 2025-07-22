@@ -99,6 +99,7 @@ function startGame() {
       }
     }
 
+<<<<<<< HEAD:HardMode.ts
     for (const [y, x] of minasOriginales) {
       const opciones = direcciones
         .map(([dy, dx]) => [y + dy, x + dx] as [number, number])
@@ -107,6 +108,15 @@ function startGame() {
           nx >= 0 && nx < mazeStructure[0].length &&
           (mazeStructure[ny][nx] === ' ' || mazeStructure[ny][nx] === 'P')
         );
+=======
+function mover(direccion: string) {
+  const direcciones: Record<string, [number, number]> = {
+    n: [-1, 0],
+    s: [1, 0],
+    o: [0, -1],
+    e: [0, 1],
+  };
+>>>>>>> fb8178b079deda9893ae3565224d1af5b83a31d4:BigTest.ts
 
       if (opciones.length > 0) {
         const [nuevoY, nuevoX] = opciones[Math.floor(Math.random() * opciones.length)];
