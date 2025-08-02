@@ -5,8 +5,59 @@ function cloneMap(matrix: string[][]): string[][] {
   return matrix.map(row => [...row]);
 }
 
+function solveMaze(maze: string[][]): [number, number][] | null {
+  const length = maze.length;
+  const width = maze[0].length;
+
+  const visited = Array.from({ length }, () => Array(width).fill(false));
+  const queue: { pos: [number, number]; path: [number, number][] }[] = [];
+  const directions = [
+    [-1, 0], [1, 0], [0, -1], [0, 1],
+  ];
+
+  let start: [number, number] = [-1, -1];
+
+  findStart:
+  for (let y = 0; y < length; y++) {
+    for (let x = 0; x < width; x++) {
+      if (maze[y][x] === 'P') {
+        start = [y, x];
+        break findStart;
+      }
+    }
+  }
+
+  if (start[0] === -1) return null; // No se encontró 'P'
+
+  queue.push({ pos: start, path: [start] });
+  visited[start[0]][start[1]] = true;
+
+  while (queue.length > 0) {
+    const { pos: [y, x], path } = queue.shift()!;
+
+    for (const [dy, dx] of directions) {
+      const ny = y + dy;
+      const nx = x + dx;
+
+      if (
+        ny >= 0 && ny < length &&
+        nx >= 0 && nx < width &&
+        !visited[ny][nx] &&
+        (maze[ny][nx] === ' ' || maze[ny][nx] === 'E')
+      ) {
+        const newPath = [...path, [ny, nx] as [number,number]];
+        if (maze[ny][nx] === 'E') return newPath;
+        visited[ny][nx] = true;
+        queue.push({ pos: [ny, nx], path: newPath });
+      }
+    }
+  }
+
+  return null; 
+}
+
 export function startGame(selectedMap: string[][]) {
-  const rl = readline.createInterface({  // Mover rl aquí para recrearlo cada vez
+  const rl = readline.createInterface({  
     input: process.stdin,
     output: process.stdout,
   });
@@ -46,22 +97,23 @@ export function startGame(selectedMap: string[][]) {
     }
     console.log(`\nMovimientos: ${moves}`);
     console.log(`(Escribe 'reiniciar' para comenzar de nuevo)`);
+  
   }
 
-  function moverMinasAleatoriamente() {
-    const direcciones: [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-    const minasOriginales: [number, number][] = [];
+  function movingMines() {
+    const directions: [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    const originalMines: [number, number][] = [];
 
     for (let y = 0; y < currentMap.length; y++) {
       for (let x = 0; x < currentMap[0].length; x++) {
         if (currentMap[y][x] === '*') {
-          minasOriginales.push([y, x]);
+          originalMines.push([y, x]);
         }
       }
     }
 
-    for (const [y, x] of minasOriginales) {
-      const opciones = direcciones
+    for (const [y, x] of originalMines) {
+      const options = directions
         .map(([dy, dx]) => [y + dy, x + dx] as [number, number])
         .filter(([ny, nx]) =>
           ny >= 0 && ny < currentMap.length &&
@@ -69,10 +121,10 @@ export function startGame(selectedMap: string[][]) {
           (currentMap[ny][nx] === ' ' || currentMap[ny][nx] === 'P')
         );
 
-      if (opciones.length > 0) {
-        const [nuevoY, nuevoX] = opciones[Math.floor(Math.random() * opciones.length)];
+      if (options.length > 0) {
+        const [newY, newX] = options[Math.floor(Math.random() * options.length)];
 
-        if (currentMap[nuevoY][nuevoX] === 'P') {
+        if (currentMap[newY][newX] === 'P') {
           console.clear();
           console.log(chalk.red('\n💥 ¡Una mina te alcanzó! Has perdido.\n'));
           rl.question("¿Quieres intentarlo de nuevo? (s/n): ", (r) => {
@@ -87,7 +139,7 @@ export function startGame(selectedMap: string[][]) {
         }
 
         currentMap[y][x] = ' ';
-        currentMap[nuevoY][nuevoX] = '*';
+        currentMap[newY][newX] = '*';
       }
     }
 
@@ -102,12 +154,12 @@ export function startGame(selectedMap: string[][]) {
       e: [0, 1],
     };
 
-    const minasSiguen = moverMinasAleatoriamente();
-    if (!minasSiguen) return false;
+    const followMines = movingMines();
+    if (!followMines) return false;
 
     const delta = directions[direction];
     if (!delta) {
-      console.log("Comando inválido. Usa: n, s, e, o o 'reiniciar'");
+      console.log("Comando inválido. Usa: n, s, e, o, 'resolver' o 'reiniciar'");
       return true;
     }
 
@@ -167,23 +219,54 @@ export function startGame(selectedMap: string[][]) {
     return true;
   }
 
-  function play() {
-    printMaze();
-    rl.question("Escribe una dirección (n, s, e, o): ", (input) => {
-      const command = input.trim().toLowerCase();
+function play() {
+  printMaze();
+  rl.question("Escribe una dirección (n, s, e, o) o 'resolver' para terminar: ", (input) => {
+    const command = input.trim().toLowerCase();
 
-      if (command === "reiniciar") {
-        rl.close();
-        startGame(mazeStructure);
-        return;
-      }
+    if (command === "reiniciar") {
+      rl.close();
+      startGame(mazeStructure);
+      return;
+    }
 
-      const follow = move(command);
-      if (follow) {
-        setTimeout(play, 1000);
-      }
-    });
+    if (command === "resolver") {
+  const path = solveMaze(mazeStructure);
+  if (!path) {
+    console.log("No hay solución posible.");
+    play();
+    return;
   }
+
+  moves=0;
+  const safePath: [number, number][] = path; 
+
+  let step = 0;
+  function animateStep() {
+    if (moves < safePath.length) {
+      const [y, x] = safePath[moves];
+      currentMap[posY][posX] = ' ';
+      posY = y;
+      posX = x;
+      currentMap[posY][posX] = 'P';
+      printMaze();
+      moves++;
+      setTimeout(animateStep, 300);
+    } else {
+      console.log(`\n¡Laberinto resuelto automáticamente en ${safePath.length - 1} pasos!`);
+      rl.close();
+    }
+  }
+  animateStep();
+  return;
+}
+
+    const follow = move(command);
+    if (follow) {
+      setTimeout(play, 1000);
+    }
+  });
+}
 
   play();
 }
